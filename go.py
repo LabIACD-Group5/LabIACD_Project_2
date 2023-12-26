@@ -179,9 +179,6 @@ def is_game_finished(state: GameState):
     return False
 
 
-import numpy as np
-from copy import deepcopy
-
 def invalid_position(i,j,n):    # helper method that returns True if (i,j) is an invalid position
     return i < 0 or i >= n or j < 0 or j >= n
 
@@ -282,78 +279,79 @@ def setScreen():
     return screen
 
 def drawBoard(game: GameState, screen):
-    screen.fill((173, 216, 230))  # Light Blue background
+    screen.fill((173, 216, 230)) 
 
-    # Draw board lines
-    line_color = (0, 0, 0)  # Black lines
+    # Draw the name "Go" above the board
+    font = pygame.font.SysFont(None, 50)
+    text = font.render("Go " + str(game.n)+ "x"+ str(game.n), True, (0, 0, 0))
+    text_rect = text.get_rect(center=(400, 25))
+    screen.blit(text, text_rect)
+
+    pygame.draw.line(screen, (0, 0, 0), (0, 0), (800, 0), 5)
+    pygame.draw.line(screen, (0, 0, 0), (0, 0), (0, 800), 5)
+    pygame.draw.line(screen, (0, 0, 0), (0, 798), (800, 798), 5)
+    pygame.draw.line(screen, (0, 0, 0), (798, 0), (798, 800), 5)
+
+    # Draw lines on the board
     for i in range(0, game.n):
         # Vertical lines
-        pygame.draw.line(screen, line_color, (800 * i / game.n, 0), (800 * i / game.n, 800), 2)
+        pygame.draw.line(screen, (0, 0, 0), (800 * i / game.n + (800 / game.n) / 2, (800 / game.n) / 2), (800 * i / game.n + (800 / game.n) / 2, 800 - (800 / game.n) / 2), 5)
         # Horizontal lines
-        pygame.draw.line(screen, line_color, (0, 800 * i / game.n), (800, 800 * i / game.n), 2)
+        pygame.draw.line(screen, (0, 0, 0), ((800 / game.n) / 2, 800 * i / game.n + (800 / game.n) / 2), (800 - (800 / game.n) / 2, 800 * i / game.n + (800 / game.n) / 2), 5)
 
-def drawPieces(game: GameState, screen, last_move=None):
+
+def drawPieces(game: GameState, screen):
     n = game.n
     for i in range(n):
         for j in range(n):
-            # Calcular as coordenadas do centro de cada círculo
-            center_x = int((800 * i / n) + (800 / (2 * n)) - 50)
-            center_y = int((800 * j / n) + (800 / (2 * n)) - 50)
-
-            # Desenhar peças pretas
+            # draws black pieces
             if game.board[j][i] == 1:
-                pygame.draw.circle(screen, (0, 0, 0), (center_x, center_y), int(800 / (3 * n)))
-            # Desenhar peças brancas
-            elif game.board[j][i] == -1:
-                pygame.draw.circle(screen, (255, 255, 255), (center_x, center_y), int(800 / (3 * n)))
-
+                pygame.draw.circle(screen, (0,0,0), ((800*i/n)+800/(2*n), (800*j/n)+800/(2*n)), 800/(3*n))
+            # draws white pieces
+            elif game.board[j][i]==-1:
+                pygame.draw.circle(screen, (255,255,255), ((800*i/n)+800/(2*n), (800*j/n)+800/(2*n)), 800/(3*n))
 
 
 def drawResult(game: GameState, screen):
     if game.end == 0:
         return None
-    pygame.draw.rect(screen, (0, 0, 0), (120, 240, 560, 320))
-    pygame.draw.rect(screen, (255, 255, 255), (140, 260, 520, 280))
-    font = pygame.font.Font(None, 36)  # Use the default font
 
-    result, scores = game.winner, game.scores
-    if result == 0:
-        text = font.render("Draw!", True, (0, 0, 0))
-    elif result == 1 or result == 2:
-        result_text(screen, result, scores)
-        return
+    # Cores
+    bg_color = (20, 20, 20)
+    message_color = (255, 255, 255)
+    font_color = (0, 0, 0)
+
+    # Dimensões e bordas arredondadas
+    rect_dimensions = (250, 300, 300, 200)
+    border_radius = 15
+
+    # Desenhar retângulos
+    pygame.draw.rect(screen, bg_color, rect_dimensions, border_radius=border_radius)
+    pygame.draw.rect(screen, message_color, (rect_dimensions[0] + 10, rect_dimensions[1] + 10, rect_dimensions[2] - 20, rect_dimensions[3] - 20), border_radius=border_radius)
+
+    # Fontes
+    font_title = pygame.font.SysFont(None, 40)
+    font_body = pygame.font.SysFont(None, 30)
+
+    color = {1: "Black", 2: "White"}
+
+    # Título
+    if game.winner == 0:
+        title_text = font_title.render("Draw!", True, font_color)
     else:
-        text = font.render("ERROR", True, (100, 0, 0))
-        print(f"Unexpected result: {result}")
+        title_text = font_title.render(f"{color[game.winner].capitalize()} Wins!", True, font_color)
 
-    text_rect = text.get_rect(center=(400, 400))
-    screen.blit(text, text_rect)
-    
-def result_text(screen,result,scores):
-    font = pygame.font.Font('freesansbold.ttf', 32)
-    color = {1:"black",2:"white"}
-    text_lines = [
-        str(color[result]) + " wins!",
-        "",
-        "Score: Black " + str(scores[1]) + " | White " + str(scores[-1])
-    ]
-    # Render text surfaces
-    text_surfaces = [font.render(line, True, (0,0,0)) for line in text_lines]
+    title_rect = title_text.get_rect(center=(400, 400))
+    screen.blit(title_text, title_rect)
 
-    # Calculate text box dimensions
-    text_box_width = max(surface.get_width() for surface in text_surfaces)
-    text_box_height = sum(surface.get_height() for surface in text_surfaces)
+    # Texto do placar
+    score_text = font_body.render(f"Score: Black {game.scores[1]} | White {game.scores[-1]}", True, font_color)
+    score_rect = score_text.get_rect(center=(400, 460))
+    screen.blit(score_text, score_rect)
 
-    width,height=800,800
-    # Set up text box position
-    text_box_x = (width - text_box_width) // 2
-    text_box_y = (height - text_box_height) // 2
-    
-    y_offset = 0
-    for surface in text_surfaces:
-        screen.blit(surface, (text_box_x, text_box_y + y_offset))
-        y_offset += surface.get_height()
-        
+    pygame.display.flip()
+
+
         
 def mousePos(game:GameState):
     click = pygame.mouse.get_pos()   
@@ -441,3 +439,5 @@ if __name__ == "__main__":
 
 ## Para rodar é python go.py 7
 ############################ 9
+## Pressionar P para passar
+## Acaba quando os 2 passam 
