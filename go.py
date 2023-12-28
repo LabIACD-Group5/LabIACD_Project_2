@@ -363,7 +363,8 @@ def mousePos(game:GameState):
 
 def switchPlayer(turn):
     return -turn
-    
+
+"""  
 def go_game(game: GameState, screen):  
     turn = 1
     step = 0
@@ -421,6 +422,96 @@ def main(board_size):
     drawBoard(initial_state, screen)
     go_game(initial_state, screen)
 
+"""
+
+def go_game(game: GameState):
+    turn = 1
+    step = 0
+    while game.end == 0:
+        print_board(game)
+
+        if is_game_finished(game):
+            game.end_game()
+
+        if game.end != 0:
+            draw_result(game)
+            time.sleep(4)
+            break
+
+        i, j = get_player_move(game)
+        prev_board = cp.deepcopy(game.board)
+
+        if not is_move_valid(game, i, j):  # checks if move is valid
+            continue  # if not, it expects another move from the same player
+
+        game = game.move(i, j)
+
+        if not np.array_equal(prev_board, game.board):
+            turn = switch_player(turn)
+        time.sleep(0.1)
+
+        if is_game_finished(game):
+            game.end_game()
+
+        step += 1
+
+
+def print_board(game: GameState):
+    n = game.n
+    current_player = "1" if game.turn == 1 else "2"
+    print(f"Turn: {game.play_idx} | Player: {current_player}")
+    # Print column numbers
+    col_numbers = "    " + " ".join(str(i) for i in range(n))
+    print(col_numbers)
+
+    # Print a line of separation
+    print("   " + "--" * n)
+
+    for i, row in enumerate(game.board):
+        # Print row number, row content, and current player
+        row_str = f"{i} | {' '.join(map(str, row))}"
+        print(row_str)
+
+    print()
+
+
+
+
+def get_player_move(game: GameState):
+    while True:
+        try:
+            move_input = input(f"Move: ")
+            i, j = map(int, move_input.split())
+            if 0 <= i < game.n and 0 <= j < game.n:
+                return i, j
+            else:
+                print("Invalid move. Please enter valid indices.")
+        except ValueError:
+            print("Invalid input. Please enter valid integers.")
+        except IndexError:
+            print("Invalid input format. Please enter row and column indices in the format 'row col: 0 0'.")
+
+
+
+def switch_player(turn):
+    return -turn
+
+
+def draw_result(game: GameState):
+    if game.winner == 0:
+        print("Draw!")
+    else:
+        print(f"Player {game.winner} wins!")
+
+    print(f"Score: Black {game.scores[1]} | White {game.scores[-1]}")
+
+
+def main(board_size):
+    n = board_size
+    initial_board = np.zeros((n, n), dtype=int)  # initializing an empty board of size (n x n)
+    initial_state = GameState(initial_board)
+    go_game(initial_state)
+    
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
