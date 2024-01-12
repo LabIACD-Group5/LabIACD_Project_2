@@ -120,10 +120,44 @@ class GameState:
 
 
     # retorna o vencedor e os scores e termina o jogo
-    def end_game(self):  
+    def end_game(self):
         self.end = 1
         self.winner,self.scores = self.get_winner()
         return self.winner,self.scores
+
+    # methods used to run the Monte Carlo Tree Search algorithm
+    def create_children(self):
+        children = []
+        for move in check_possible_moves(self):
+            i,j=move
+            new_state = deepcopy(self)
+            new_state.move(i,j)
+            children.append(new_state)
+        return children
+            
+    def get_next_state(self,i,j):   # given an action, this method returns the resulting game state
+        next_state = deepcopy(self)
+        next_state.move(i,j)
+        return next_state
+            
+    def get_value_and_terminated(self,state):   ################### 
+        new_state = state
+        if is_game_finished(new_state):
+            return 1, True
+        if np.sum(check_possible_moves(new_state))==0:
+            return 0, True
+        return 0, False
+    
+    def get_encoded_state(self):################################################################
+        state=self.board
+        encoded_state = np.stack(
+            (state == -1, state == 0, state == 1)
+        ).astype(np.float32)
+        
+        if len(state.shape) == 3:
+            encoded_state = np.swapaxes(encoded_state, 0, 1)
+        
+        return encoded_state
 
             
 """
@@ -488,4 +522,3 @@ if __name__ == "__main__":
 ## Para rodar é python go.py 7
 ############################ 9
 ## Pressionar P para passar
-## Acaba quando os
